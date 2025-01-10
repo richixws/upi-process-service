@@ -7,11 +7,19 @@ import org.apache.camel.model.dataformat.CsvDataFormat;
 import org.apache.camel.routepolicy.quartz.CronScheduledRoutePolicy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import pe.gob.bcrp.upi.process.models.dto.FileDTO;
+import pe.gob.bcrp.upi.process.models.entity.File;
 import pe.gob.bcrp.upi.process.models.entity.Transferencia;
 import pe.gob.bcrp.upi.process.models.entity.TransferenciaCsvRecord;
 import pe.gob.bcrp.upi.process.service.TransferenciaService;
+import pe.gob.bcrp.upi.process.util.Fecha;
 import pe.gob.bcrp.upi.process.util.FileSorter;
 import pe.gob.bcrp.upi.process.util.ListAggrStrategy;
+
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.util.Date;
 
 @Component
 public class FileRoute extends RouteBuilder {
@@ -75,10 +83,8 @@ public class FileRoute extends RouteBuilder {
                     String newBody = exchange.getIn().getBody(String.class).replaceAll("\\uFEFF", "");
                     exchange.getMessage().setBody((newBody));
 
-                    // Obtener datos del archivo
-                    String fileName = exchange.getIn().getHeader("CamelFileName", String.class);
-                    String filePath = exchange.getIn().getHeader("CamelFileAbsolutePath", String.class);
-                    Long fileSize = exchange.getIn().getHeader("CamelFileLength", Long.class);
+                    exchange.getIn().setHeader("FileAddedDate", java.time.LocalDateTime.now());
+
                 })
                 .choice()
                 .when(header("CamelFileName").contains("orders"))
@@ -91,7 +97,41 @@ public class FileRoute extends RouteBuilder {
                 .split(body(), new ListAggrStrategy())
                 .streaming()
                 .shareUnitOfWork()
-                .bean(transferenciaService, "persistTransferencia")
+                //.bean(transferenciaService, "persistTransferencia")
+                .process(exchange -> {
+
+                    Date fileCreationDate = new Date(exchange.getIn().getHeader("CamelFileLastModified", Long.class));
+                    // Fecha de procesamiento
+                    LocalDateTime processingDate = LocalDateTime.now();
+                    // Obtener los datos del archivo del intercambio
+                    String fileName = exchange.getIn().getHeader("CamelFileName", String.class);
+                    String filePath = exchange.getIn().getHeader("CamelFileAbsolutePath", String.class);
+                    Integer fileSize = exchange.getIn().getHeader("CamelFileLength", Integer.class);
+                    String extension = fileName.substring(fileName.lastIndexOf('.') + 1);
+                    String mime = Files.probeContentType(Paths.get(filePath));
+                    // Imprimir para verificar los datos
+                    System.out.println("MIME Type: " + mime);
+                    System.out.println("File Extension: " + extension);
+                    System.out.println("File Name: " + fileName);
+                    System.out.println("File Path: " + filePath);
+                    System.out.println("File Size: " + fileSize);
+                    System.out.println("File Creation Date: " + fileCreationDate);
+
+                    FileDTO file=new FileDTO();
+                    file.setFilename(fileName);
+                    file.setPath(filePath);
+                    file.setSize(fileSize);
+                    file.setExtension(extension);
+                    file.setMime(mime);
+
+                    // Fecha de adición
+                    LocalDateTime addedDate = exchange.getIn().getHeader("FileAddedDate", LocalDateTime.class);
+                    file.setCreateDateFile(Fecha.formatDateTime(addedDate));
+                    file.setProcessDateFile(Fecha.formatDateTime(processingDate));
+
+                    TransferenciaCsvRecord transferenciaCsvRecord = exchange.getIn().getBody(TransferenciaCsvRecord.class);
+                    transferenciaService.persistTransferencia(transferenciaCsvRecord, file);
+                })
                 .marshal(orderCsvDataFormat)
                 .log(LoggingLevel.INFO, "${body}")
                 .log(LoggingLevel.INFO, "${file:name}")

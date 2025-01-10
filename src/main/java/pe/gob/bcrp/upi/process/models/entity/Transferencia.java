@@ -44,21 +44,8 @@ public class Transferencia {
     @Column(name = "num_ref_origen")
     private String numRefOrigen;
 
-    @OneToMany(mappedBy = "transferencia", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "transferencia", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     private List<File> files = new ArrayList<>();
 
-    /**
-    @Override
-    public String toString() {
-        return "Transferencia{" +
-                "codConcepto='" + codConcepto + '\'' +
-                ", cuentaDestino=" + cuentaDestino +
-                ", cuentaOrigen=" + cuentaOrigen +
-                ", fechaLiquidacion=" + fechaLiquidacion +
-                ", montoOperacion=" + montoOperacion +
-                ", instruccionesPago='" + instruccionesPago + '\'' +
-                ", numRefLBTREnlace='" + numRefLBTREnlace + '\'' +
-                ", numRefOrigen='" + numRefOrigen + '\'' +
-                '}';
-    }**/
+
 }

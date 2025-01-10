@@ -1,2 +1,2 @@
 cod_concepto,cuenta_destino,cuenta_origen,fecha_liquidacion,instrucciones_pago,monto_operacion,num_ref_lbtrenlace,num_ref_origen
-C265,11141154000000000000,11010100020300000000,2024-12-26T10:00:24.004Z,instruccionesPago,250.00,Prueba,Prueba3
+C265,11141154000000000000,11010100020300000000,26/12/2024 05:00,instruccionesPago,250,Prueba,Prueba3
