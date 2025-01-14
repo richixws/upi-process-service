@@ -15,30 +15,36 @@ import java.util.Date;
 @Data
 public class TransferenciaCsvRecord {
 
-    @DataField(pos = 1, columnName = "cod_concepto")
+    @DataField(pos = 1, columnName = "sid")
+    private String sid;
+
+    @DataField(pos = 2, columnName = "cod_concepto")
     private String codConcepto;
 
-    @DataField(pos = 2, columnName = "cuenta_destino")
+    @DataField(pos = 3, columnName = "cuenta_destino")
     private String cuentaDestino;
 
-    @DataField(pos = 3, columnName = "cuenta_origen")
+    @DataField(pos = 4, columnName = "cuenta_origen")
     private String cuentaOrigen;
 
-    @DataField(pos = 4, columnName = "fecha_liquidacion")
+    @DataField(pos = 5, columnName = "fecha_liquidacion")
     @BindyConverter(DateConverter.CustomConverter.class)
     private Date fechaLiquidacion;
 
-    @DataField(pos = 5, columnName = "instrucciones_pago")
+    @DataField(pos = 6, columnName = "instrucciones_pago")
     private String instruccionesPago;
 
-    @DataField(pos = 6, columnName = "monto_operacion")
+    @DataField(pos = 7, columnName = "monto_operacion")
     private Double montoOperacion;
 
-    @DataField(pos = 7, columnName = "num_ref_lbtrenlace")
+    @DataField(pos = 8, columnName = "num_ref_lbtrenlace")
     private String numRefLBTREnlace;
 
-    @DataField(pos = 8, columnName = "num_ref_origen")
+    @DataField(pos = 9, columnName = "num_ref_origen")
     private String numRefOrigen;
+
+    @DataField(pos = 10, columnName = "firma")
+    private String firma;
 
 /**
     @Override

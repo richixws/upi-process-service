@@ -77,6 +77,7 @@ public class TransferenciaService {
 
     private Transferencia mapToEntity(TransferenciaCsvRecord csvRecord) {
         return Transferencia.builder()
+                .sid(csvRecord.getSid())
                 .codConcepto(csvRecord.getCodConcepto())
                 .cuentaDestino(csvRecord.getCuentaDestino())
                 .cuentaOrigen(csvRecord.getCuentaOrigen())
@@ -85,6 +86,7 @@ public class TransferenciaService {
                 .montoOperacion(csvRecord.getMontoOperacion())
                 .numRefLBTREnlace(csvRecord.getNumRefLBTREnlace())
                 .numRefOrigen(csvRecord.getNumRefOrigen())
+                .firma(csvRecord.getFirma())
                 .build();
     }
 }

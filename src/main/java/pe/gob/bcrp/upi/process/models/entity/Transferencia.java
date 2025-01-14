@@ -20,6 +20,9 @@ public class Transferencia {
     @Column(name = "id_transferencia")
     private  Long id;
 
+    @Column(name = "sid")
+    private String sid;
+
     @Column(name = "cod_concepto")
     private String codConcepto;
 
@@ -43,6 +46,9 @@ public class Transferencia {
 
     @Column(name = "num_ref_origen")
     private String numRefOrigen;
+
+    @Column(name = "firma")
+    private String firma;
 
     @OneToMany(mappedBy = "transferencia", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     private List<File> files = new ArrayList<>();
