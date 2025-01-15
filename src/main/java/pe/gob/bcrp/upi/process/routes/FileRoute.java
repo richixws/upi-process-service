@@ -26,15 +26,23 @@ public class FileRoute extends RouteBuilder {
 
     private static final String AMPERSAND = "&";
     private final BindyCsvDataFormat orderCsvDataFormat = new BindyCsvDataFormat(TransferenciaCsvRecord.class);
-
     private final TransferenciaService transferenciaService;
 
-    public FileRoute(TransferenciaService transferenciaService) {
-        this.transferenciaService = transferenciaService;
-    }
 
-    @Value("${source.location}")
-    private String sourceLocation;
+    @Value("${sftp.host}")
+    private String sftpHost;
+
+    @Value("${sftp.port}")
+    private String sftpPort;
+
+    @Value("${sftp.username}")
+    private String sftpUsername;
+
+    @Value("${sftp.password}")
+    private String sftpPassword;
+
+    @Value("${sftp.remote.directory}")
+    private String remoteDirectory;
 
     @Value("${target.location}")
     private String targetLocation;
@@ -52,6 +60,9 @@ public class FileRoute extends RouteBuilder {
     private String routeAutostart;
 
 
+    public FileRoute(TransferenciaService transferenciaService) {
+        this.transferenciaService = transferenciaService;
+    }
 
     @Override
     public void configure() throws Exception {
@@ -70,26 +81,26 @@ public class FileRoute extends RouteBuilder {
                 .log(LoggingLevel.INFO, "${file:name}")
                 .log("Exception occurred due: ${exception}")
                 .useOriginalMessage()
-                .to("file://".concat(targetErrorLocation));
+                .to("file://" + targetErrorLocation);
 
         getContext().getRegistry().bind("fileSorter", new FileSorter<Object>());
 
-        from(buildPathUrl())
-                .routeId("file-sync")
+        // Main SFTP route
+        from(buildSftpUrl())
+                .routeId("sftp-sync")
                 .autoStartup(routeAutostart)
                 .routePolicy(startPolicy)
-                .log(LoggingLevel.INFO, "${file:name}")
+                .log(LoggingLevel.INFO, "Processing file: ${file:name}")
                 .process(exchange -> {
                     String newBody = exchange.getIn().getBody(String.class).replaceAll("\\uFEFF", "");
-                    exchange.getMessage().setBody((newBody));
-
-                    exchange.getIn().setHeader("FileAddedDate", java.time.LocalDateTime.now());
-
+                    exchange.getMessage().setBody(newBody);
+                    exchange.getIn().setHeader("FileAddedDate", LocalDateTime.now());
                 })
                 .choice()
                 .when(header("CamelFileName").contains("orders"))
-                .log(LoggingLevel.INFO, "Order file")
-                .to("direct:orderRoute");
+                .log(LoggingLevel.INFO, "Processing order file")
+                .to("direct:orderRoute")
+                .end();
 
         from("direct:orderRoute")
                 .log(LoggingLevel.INFO, "${body}")
@@ -97,34 +108,22 @@ public class FileRoute extends RouteBuilder {
                 .split(body(), new ListAggrStrategy())
                 .streaming()
                 .shareUnitOfWork()
-                //.bean(transferenciaService, "persistTransferencia")
                 .process(exchange -> {
-
                     Date fileCreationDate = new Date(exchange.getIn().getHeader("CamelFileLastModified", Long.class));
-                    // Fecha de procesamiento
                     LocalDateTime processingDate = LocalDateTime.now();
-                    // Obtener los datos del archivo del intercambio
                     String fileName = exchange.getIn().getHeader("CamelFileName", String.class);
                     String filePath = exchange.getIn().getHeader("CamelFileAbsolutePath", String.class);
                     Integer fileSize = exchange.getIn().getHeader("CamelFileLength", Integer.class);
                     String extension = fileName.substring(fileName.lastIndexOf('.') + 1);
                     String mime = Files.probeContentType(Paths.get(filePath));
-                    // Imprimir para verificar los datos
-                    System.out.println("MIME Type: " + mime);
-                    System.out.println("File Extension: " + extension);
-                    System.out.println("File Name: " + fileName);
-                    System.out.println("File Path: " + filePath);
-                    System.out.println("File Size: " + fileSize);
-                    System.out.println("File Creation Date: " + fileCreationDate);
 
-                    FileDTO file=new FileDTO();
+                    FileDTO file = new FileDTO();
                     file.setFilename(fileName);
                     file.setPath(filePath);
                     file.setSize(fileSize);
                     file.setExtension(extension);
                     file.setMime(mime);
 
-                    // Fecha de adición
                     LocalDateTime addedDate = exchange.getIn().getHeader("FileAddedDate", LocalDateTime.class);
                     file.setCreateDateFile(Fecha.formatDateTime(addedDate));
                     file.setProcessDateFile(Fecha.formatDateTime(processingDate));
@@ -133,19 +132,31 @@ public class FileRoute extends RouteBuilder {
                     transferenciaService.persistTransferencia(transferenciaCsvRecord, file);
                 })
                 .marshal(orderCsvDataFormat)
-                .log(LoggingLevel.INFO, "${body}")
-                .log(LoggingLevel.INFO, "${file:name}")
-                .to("file://".concat(targetLocation));
+                .log(LoggingLevel.INFO, "Processed file content: ${body}")
+                .to("file://" + targetLocation);
     }
 
 
-    private String buildPathUrl() {
-        StringBuilder stringBuilder = new StringBuilder("file://");
-        stringBuilder.append(sourceLocation)
-                .append("?delete=true&sorter=#fileSorter");
+    private String buildSftpUrl() {
+        StringBuilder builder = new StringBuilder("sftp://")
+                .append(sftpUsername)
+                .append("@")
+                .append(sftpHost)
+                .append(":")
+                .append(sftpPort)
+                .append(remoteDirectory)
+                .append("?password=")
+                .append(sftpPassword)
+                .append(AMPERSAND)
+                .append("delete=true")
+                .append(AMPERSAND)
+                .append("disconnectOnBatchComplete=true")
+                .append(AMPERSAND)
+                .append("stepwise=false")
+                .append(AMPERSAND)
+                .append("sorter=#fileSorter");
 
-        return stringBuilder.toString();
-
+        return builder.toString();
     }
 
 
