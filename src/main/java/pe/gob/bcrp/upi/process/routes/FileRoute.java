@@ -142,7 +142,7 @@ public class FileRoute extends RouteBuilder {
     private String buildPathUrl() {
         StringBuilder stringBuilder = new StringBuilder("file://");
         stringBuilder.append(sourceLocation)
-                .append("?delete=false&sorter=#fileSorter");
+                .append("?delete=true&sorter=#fileSorter");
 
         return stringBuilder.toString();
 
