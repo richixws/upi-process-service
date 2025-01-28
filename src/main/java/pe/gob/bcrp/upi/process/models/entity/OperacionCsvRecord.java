@@ -1,6 +1,5 @@
 package pe.gob.bcrp.upi.process.models.entity;
 
-import jakarta.persistence.Column;
 import lombok.Data;
 import org.apache.camel.dataformat.bindy.annotation.BindyConverter;
 import org.apache.camel.dataformat.bindy.annotation.CsvRecord;
@@ -13,25 +12,25 @@ import java.util.Date;
 @Component
 @CsvRecord(separator = ",", skipFirstLine = true,generateHeaderColumns = true)
 @Data
-public class TransferenciaCsvRecord {
+public class OperacionCsvRecord {
 
-    @DataField(pos = 1, columnName = "sid")
-    private String sid;
+    @DataField(pos = 1, columnName = "entidad")
+    private String entidad;
 
-    @DataField(pos = 2, columnName = "cod_concepto")
-    private String codConcepto;
+    @DataField(pos = 2, columnName = "tipo_operacion")
+    private String tipoOperacion;
 
-    @DataField(pos = 3, columnName = "cuenta_destino")
-    private String cuentaDestino;
+    @DataField(pos = 3, columnName = "monto_operacion")
+    private Double montoOperacion;
 
-    @DataField(pos = 4, columnName = "cuenta_origen")
-    private String cuentaOrigen;
-
-    @DataField(pos = 5, columnName = "fecha_liquidacion")
+    @DataField(pos = 4, columnName = "fecha_operacion")
     @BindyConverter(DateConverter.CustomConverter.class)
-    private Date fechaLiquidacion;
+    private Date fechaOperacion;
 
-    @DataField(pos = 6, columnName = "instrucciones_pago")
+    //@DataField(pos = 4, columnName = "fecha_liquidacion")
+    //private String cuentaOrigen;
+
+   /** @DataField(pos = 6, columnName = "instrucciones_pago")
     private String instruccionesPago;
 
     @DataField(pos = 7, columnName = "monto_operacion")
@@ -44,7 +43,7 @@ public class TransferenciaCsvRecord {
     private String numRefOrigen;
 
     @DataField(pos = 10, columnName = "firma")
-    private String firma;
+    private String firma;**/
 
 /**
     @Override

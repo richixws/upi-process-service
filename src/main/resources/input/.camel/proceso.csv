@@ -1,0 +1,5 @@
+entidad,tipo_operacion,monto_operacion,fecha_operacion
+bcp,cargo,2000,26/01/2025 14:01
+interbank,abono,1000,26/01/2025 14:01
+falabella,cargo,1000,26/01/2025 14:01
+bcp,abono,5000,26/01/2025 14:01

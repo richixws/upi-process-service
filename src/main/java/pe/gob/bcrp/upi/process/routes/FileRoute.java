@@ -8,10 +8,8 @@ import org.apache.camel.routepolicy.quartz.CronScheduledRoutePolicy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import pe.gob.bcrp.upi.process.models.dto.FileDTO;
-import pe.gob.bcrp.upi.process.models.entity.File;
-import pe.gob.bcrp.upi.process.models.entity.Transferencia;
-import pe.gob.bcrp.upi.process.models.entity.TransferenciaCsvRecord;
-import pe.gob.bcrp.upi.process.service.TransferenciaService;
+import pe.gob.bcrp.upi.process.models.entity.OperacionCsvRecord;
+import pe.gob.bcrp.upi.process.service.OperacionService;
 import pe.gob.bcrp.upi.process.util.Fecha;
 import pe.gob.bcrp.upi.process.util.FileSorter;
 import pe.gob.bcrp.upi.process.util.ListAggrStrategy;
@@ -25,12 +23,12 @@ import java.util.Date;
 public class FileRoute extends RouteBuilder {
 
     private static final String AMPERSAND = "&";
-    private final BindyCsvDataFormat orderCsvDataFormat = new BindyCsvDataFormat(TransferenciaCsvRecord.class);
+    private final BindyCsvDataFormat orderCsvDataFormat = new BindyCsvDataFormat(OperacionCsvRecord.class);
 
-    private final TransferenciaService transferenciaService;
+    private final OperacionService operacionService;
 
-    public FileRoute(TransferenciaService transferenciaService) {
-        this.transferenciaService = transferenciaService;
+    public FileRoute(OperacionService operacionService) {
+        this.operacionService = operacionService;
     }
 
     @Value("${source.location}")
@@ -87,7 +85,8 @@ public class FileRoute extends RouteBuilder {
 
                 })
                 .choice()
-                .when(header("CamelFileName").contains("orders"))
+               // .when(header("CamelFileName").contains("orders")) // Si el nombre del archivo contiene la palabra "orders"
+                .when(header("CamelFileName").regex(".*\\.csv$"))
                 .log(LoggingLevel.INFO, "Order file")
                 .to("direct:orderRoute");
 
@@ -129,8 +128,8 @@ public class FileRoute extends RouteBuilder {
                     file.setCreateDateFile(Fecha.formatDateTime(addedDate));
                     file.setProcessDateFile(Fecha.formatDateTime(processingDate));
 
-                    TransferenciaCsvRecord transferenciaCsvRecord = exchange.getIn().getBody(TransferenciaCsvRecord.class);
-                    transferenciaService.persistTransferencia(transferenciaCsvRecord, file);
+                    OperacionCsvRecord operacionCsvRecord = exchange.getIn().getBody(OperacionCsvRecord.class);
+                    operacionService.persistTransferencia(operacionCsvRecord, file);
                 })
                 .marshal(orderCsvDataFormat)
                 .log(LoggingLevel.INFO, "${body}")
